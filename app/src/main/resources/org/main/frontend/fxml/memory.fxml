@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.GridPane?>
+
+<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="org.main.frontend.ui.MemoryController" 
+          hgap="10" vgap="10" stylesheets="@style.css" 
+          alignment="CENTER" 
+          prefWidth="400" prefHeight="200">
+    
+    <Label text="Add a memory:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+    <TextField fx:id="activeMemo" text="0" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+    <TextField fx:id="memoryTitle" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+    
+    <Label text="Memory:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+    <TextArea fx:id="memoryEditor" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    
+    
+    <Button text="Save Memory" onAction="#saveMemory" fx:id="memoButton" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+    <Button text="Next" onAction="#nextMemory" fx:id="nextButton" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+    <Button text="previous" onAction="#preMemory" fx:id="preButton" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+    <Button text="Load Memory" onAction="#loadMemory" fx:id="loadButton" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+</GridPane>

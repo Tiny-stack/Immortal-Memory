@@ -1,0 +1,31 @@
+.root {
+    -fx-background-color: lightgray; /* Background color for the scene */
+}
+
+.grid-pane {
+    alignment: CENTER; /* Center alignment for GridPane */
+}
+
+.label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.text-field, .password-field {
+    padding: 5px;
+    font-size: 12px;
+    min-width: 200px; /* Set a minimum width for text fields */
+}
+
+.button {
+    padding: 8px;
+    font-size: 14px;
+    background-color: #007BFF; /* Button background color */
+    text-fill: white; /* Button text color */
+    min-width: 100px; /* Set a minimum width for the button */
+}
+
+/* Optional: Add hover effect for button */
+.button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
