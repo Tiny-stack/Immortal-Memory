@@ -109,6 +109,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import org.main.backend.Operation;
+import org.main.backend.models.User;
 import org.main.frontend.ui.AppController;
 import org.main.backend.victororm.*;
 
@@ -128,7 +129,7 @@ public class App extends Application {
 
     Parent root = loader.load();
     AppController app = loader.getController();
-    app.initResources(this, op);
+    app.initResources(this);
    
     Scene scene = new Scene(root, 300, 200);
     primary.setScene(scene);
@@ -136,29 +137,40 @@ public class App extends Application {
     primary.show();
     }
 
-    // public static void main(String[] args) throws IOException {
-    //     op = Operation.initConnection();
-    //     launch(args);
-    // }
+    public static void main(String[] args) throws IOException {
+        // op = Operation.initConnection();
+        launch(args);
+    }
 
-    public static void main(String[] args) throws SQLException
-	{
-		CRUD<User> userCrud = new CRUD<>(User.class);
-		// User u = new User("Vishwajeet Rauniyar","12,3,4","09/10/2001","I am Tiny",null);
-        // u.setId(1l);
-		// User u2 = new User("Tiny","123","09/10/2001","I am his friend",u);
+    // public static void main(String[] args) throws SQLException
+	// {
+	// 	CRUD<User> userCrud = new CRUD<>(User.class);
+    //     CRUD<TestUser> testCrud = new CRUD<>(TestUser.class);
+    //     testCrud.save(new TestUser("500","600","800","100",null));
+	// 	// User u = new User("Vishwajeet Rauniyar","12,3,4","09/10/2001","I am Tiny",null);
+    //     // u.setId(1l);
+	// 	// User u2 = new User("Tiny","123","09/10/2001","I am his friend",u);
        
 
-		// userCrud.save(u2);
-		// System.out.println("Saved");
-        // System.out.println("u1: "+u);
-        // System.out.println("u2: "+u2);
-        System.out.println(userCrud.findById(7));
-        System.out.println(userCrud.delete(6));
-	}
+	// 	// userCrud.save(u2);
+	// 	// System.out.println("Saved");
+    //     // System.out.println("u1: "+u);
+    //     // System.out.println("u2: "+u2);
+    //     System.out.println(userCrud.findById(7));
+    //     System.out.println(userCrud.delete(6));
+	// }
     private static boolean userExist()
     {
-        return !op.getUserName().equals("");
+        try
+        {
+            CRUD<User> crudUser = new CRUD<>(User.class);
+            return crudUser.findAll().size()>0;
+
+        }
+        catch(Exception e)
+        {
+            return false;
+        }
     }
      public void showMessage(String title, String message) {
         Alert alert = new Alert(AlertType.INFORMATION);  // Alert type is INFORMATION

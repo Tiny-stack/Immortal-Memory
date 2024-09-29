@@ -6,16 +6,17 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.logging.Logger;
 // import com.google.gson.Gson;
+
+import org.sqlite.ExtendedCommand.SQLExtension;
+
+import javafx.scene.control.skin.MenuBarSkin;
 
 // import org.sqlite.SQLiteException;
 
@@ -24,6 +25,7 @@ import java.sql.Connection;
 
 public class CRUD<E extends Model> {
 	private static final String DB_URL = "jdbc:sqlite:diary3.db";
+    private static final Logger logger = Logger.getLogger(CRUD.class.getName());
 	private Connection connection;
 //	private E e;
 	 private Class<E> clazz;
@@ -42,9 +44,11 @@ public class CRUD<E extends Model> {
             this.tableName = table;
 
             // Check if the table exists
-            this.connection = DriverManager.getConnection(CRUD.DB_URL);
+            // this.connection = DriverManager.getConnection(CRUD.DB_URL);
             if (!doesTableExist(tableName)) {
-                throw new IllegalArgumentException("Table '" + tableName + "' does not exist in the database.");
+                    boolean created = createTable();
+                    if(!created)
+                        throw new SQLException("Unable to create the table "+this.tableName);
             }
             
             System.out.println("Connection stablished");
@@ -176,8 +180,6 @@ public class CRUD<E extends Model> {
                 Model nestedModel = (Model) getNameMethod.invoke(object);
                 if (nestedModel != null) {
                     Integer nestedId = new CRUD<>(nestedModel.getClass()).save(nestedModel);
-                    // Replace the nested model with its ID in the main object
-                    // field.set(object, nestedId);
                     stmt.setInt(index, nestedId);
                 }
                 index++; //make sure even if nested class is null index incremented
@@ -191,17 +193,17 @@ public class CRUD<E extends Model> {
 		return object.getId();
 	}
 
-	public Integer save(Model model) throws SQLException
+	public Integer save(Model model)
 	{
-        @SuppressWarnings("unchecked")
-        E object = (E)(model);
-        System.out.println("name: "+object);
-		if(!this.tableName.equals(model.getTableName()))
-			throw new SQLException("CRUD BELONGS to another model");
         
-		//  Map<String,Object> fields = e.getFields();
+        
          try
          {
+            this.connection = DriverManager.getConnection(CRUD.DB_URL);
+            @SuppressWarnings("unchecked")
+            E object = (E)(model);
+            if(!this.tableName.equals(model.getTableName()))
+                throw new SQLException("CRUD BELONGS to another model");
             if((Integer)model.getId()==null || model.getId()<=0l)
             {
         
@@ -215,40 +217,44 @@ public class CRUD<E extends Model> {
         }
         catch(InvocationTargetException ie)
         {
-            System.out.println("UNable to Invoke method: getter for id:-> getId() is not defined");//only for testing, in final version this should be logged instead of print
+            logger.info("UNable to Invoke method: getter for id:-> getId() is not defined");//only for testing, in final version this should be logged instead of print
         }
         catch(IllegalAccessException ie)
         {
-            System.err.println("Illegal Access exption");
+            logger.info("Illegal Access exption: "+ie);
         }
         catch(NoSuchMethodException ne)
         {
-            System.err.println("Getter setter are missing");
+            logger.info("Getter or setter are missing: "+ne);
         }
         catch(SQLException se)
         {
-            System.err.println("SQLexception: "+se);
+            logger.info("SQLexception: "+se);
+        }
+        finally
+        {
+            try
+            {
+                this.connection.close();
+            }
+            catch(SQLException sq)
+            {
+                logger.info("UNable to close the connection in save method");
+            }
         }
         return 0;
 	}
 	
-	    private List<E> resultSetToObject(ResultSet rs) 
-        throws InstantiationException, IllegalAccessException, 
-               IllegalArgumentException, InvocationTargetException, 
-               NoSuchMethodException, SecurityException, SQLException {
+	private List<E> resultSetToObject(ResultSet rs) throws InstantiationException, IllegalAccessException,NoSuchMethodException, IllegalArgumentException, InvocationTargetException, SecurityException, SQLException {
             List<E> response = new ArrayList<>();
             ResultSetMetaData rsMetaData = rs.getMetaData();
-            // E dummy = clazz.getDeclaredConstructor().newInstance();
             Field fields[] = clazz.getDeclaredFields();
-            
             Map<String,Field> nesteModelName = new HashMap<>();
-            System.out.println("Fields: "+Arrays.toString(fields));
             for(Field field:fields)
             {
                 if(Model.class.isAssignableFrom(field.getType()))
                     nesteModelName.put(field.getName(),field);
             }
-            System.out.println("nestedModelName->"+nesteModelName);
             int columnCount = rsMetaData.getColumnCount();
             
             // Iterate through the ResultSet rows
@@ -262,31 +268,23 @@ public class CRUD<E extends Model> {
                     String columnName = rsMetaData.getColumnName(i);  // Get column name
                     String setterName = setterMethod(columnName); // Assuming standard naming conventions
                                 // Get column value
-                    // Set the value using the corresponding setter method
                     try {
                         if(nesteModelName.containsKey(columnName))
                         {
                             Class<? extends Model> nestedModel = nesteModelName.get(columnName).getType().asSubclass(Model.class);
-                           
                             Model model = (Model) new CRUD<>(nestedModel).findById((Integer)rs.getObject(i));
                             Method setter = clazz.getMethod(setterName, model.getClass());
                             setter.invoke(instance,model);
-                            // Create an instance of the class
-                            // Model nestedModel = new CRUD(nestedModel.getClass()).findById(columnName);
                         }
                         else
                         {
                             Object columnValue = rs.getObject(i);
-                            
-                            System.out.println("Finding method: "+setterName);
-                            System.out.println("for argument type: "+columnValue.getClass());
                             Method setter = clazz.getMethod(setterName, columnValue.getClass());
-                            System.out.println("SETTER: for+"+setterName+"->"+setter);
                             setter.invoke(instance, columnValue); // Invoke the setter method
                         }
                     } catch (NoSuchMethodException e) {
                         // Handle case where setter method does not exist, if necessary
-                        System.err.println("No setter found for " + columnName);
+                        logger.info("No setter found for " + columnName);
                     }
                     
                 }
@@ -298,78 +296,262 @@ public class CRUD<E extends Model> {
         }
 	public E findById(Integer id)
 	{
-		String sql = "SELECT * FROM " + this.tableName + " WHERE id = ?";
-	    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try
+        {
+            this.connection = DriverManager.getConnection(CRUD.DB_URL);
+        
+		    String sql = "SELECT * FROM " + this.tableName + " WHERE id = ?";
+	        PreparedStatement preparedStatement = connection.prepareStatement(sql);
 	        preparedStatement.setInt(1, id);
 	        ResultSet resultSet = preparedStatement.executeQuery();
 	        return resultSetToObject(resultSet).get(0);
-	    } catch (Exception e) {
+	    } 
+        catch (Exception e) {
 	        e.printStackTrace();
 	    }
+        finally
+        {
+            try
+            {
+                this.connection.close();
+            }
+            catch(SQLException e)
+            {
+                logger.info("Unable to close the connection: in method findById");
+            }
+        }
 	    return null; // Return null if not found
 	}
+
 	public List<E> findAll()
 	{
-		String sql = "SELECT * FROM " + this.tableName;
-	    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try
+        {   
+            this.connection = DriverManager.getConnection(CRUD.DB_URL);
+
+            this.connection = DriverManager.getConnection(CRUD.DB_URL);
+		    String sql = "SELECT * FROM " + this.tableName;
+	        PreparedStatement preparedStatement = connection.prepareStatement(sql);
 	        ResultSet resultSet = preparedStatement.executeQuery();
 	        return resultSetToObject(resultSet);
-	    } catch (Exception e) {
+	    } 
+        catch (Exception e) 
+        {
 	        e.printStackTrace();
 	    }
+        finally
+        {
+            try
+            {
+                this.connection.close();
+            }
+            catch(SQLException sq)
+            {
+                logger.info("Connection could not be closed in: findAll method");
+            }
+        }
 	    return null; // Return null if not found
 	}
 	public List<E> findByColumn(String columnName,Object value)
 	{
-		String sql = "SELECT * FROM " + this.tableName+" WHERE "+columnName+" = ?";
-	    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        try
+		{    
+            this.connection = DriverManager.getConnection(CRUD.DB_URL);
+            String sql = "SELECT * FROM " + this.tableName+" WHERE "+columnName+" = ?";
+	        PreparedStatement preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setObject(1, value);
 	        ResultSet resultSet = preparedStatement.executeQuery();
 	        return resultSetToObject(resultSet);
-	    } catch (Exception e) {
-	        e.printStackTrace();
+	    } 
+        catch (Exception e) 
+        {
+	        logger.info("Exception in findByCOlumn: "+e);
 	    }
+        finally
+        {
+            try
+            {
+                this.connection.close();
+            }
+            catch(SQLException sq)
+            {
+                logger.info("Connection could not be closed in: findBycolumns method");
+            }
+        }
 	    return null; // Return null if not found
 	}
 	public List<E> findAll(Integer limit,Integer offset)
 	{
-		String sql = "SELECT * FROM " + this.tableName+" LIMIT "+limit+" OFFSET "+offset;
-	    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-	        ResultSet resultSet = preparedStatement.executeQuery();
-	        return resultSetToObject(resultSet);
-	    } catch (Exception e) {
-	        e.printStackTrace();
+        try
+        {
+                this.connection = DriverManager.getConnection(CRUD.DB_URL);
+                String sql = "SELECT * FROM " + this.tableName+" LIMIT "+limit+" OFFSET "+offset;
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                ResultSet resultSet = preparedStatement.executeQuery();
+                return resultSetToObject(resultSet);
+	    } 
+        catch (Exception e) {
+	        logger.info("FInALL des not executed properly: "+e);
 	    }
+        finally
+        {
+            try
+            {
+                this.connection.close();
+            }
+            catch(SQLException sq)
+            {
+                logger.info("Connection could not be closed in: findall  method");
+            }
+        }
 	    return null; // Return null if not found
 	}
 	public boolean delete(Integer id) throws SQLException
     {
         if(!this.tableName.equals(this.tableName))
 			throw new SQLException("CRUD BELONGS to another model"); // the chance of this happen is exremely low but we must check, may be after proper testing I will remove this check
-		 String sql = "DELETE FROM " +this.tableName + " WHERE id = "+id;
+		 try
+         {
+            this.connection = DriverManager.getConnection(DB_URL);
+            String sql = "DELETE FROM " +this.tableName + " WHERE id = "+id;
 		    
-		    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+		     PreparedStatement preparedStatement = connection.prepareStatement(sql);
 		        
 		        int rowsAffected = preparedStatement.executeUpdate();
 		        return rowsAffected > 0; // returns true if rows were deleted
-		    } catch (SQLException ex) {
-		        ex.printStackTrace();
+		} catch (SQLException ex) {
+		        logger.info("SQL error in delete: "+ex);
 		        return false; // returns false if the delete operation failed
 		    }
+            finally
+            {
+                try
+                {
+                    this.connection.close();
+                }
+                catch(SQLException sq)
+                {
+                    logger.info("Connection could not be closed in: delete method");
+                }
+            }
     }
-	public boolean delete(E e) throws SQLException
+	public boolean delete(E e) 
 	{
-		return this.delete(e.getId());
+        try
+        {
+		    return this.delete(e.getId());
+        }
+        catch(SQLException sq)
+        {
+            logger.info("Unagel to delelet model of type: "+e.getClass()+" : for id = "+e.getId());
+            return false;
+        }
 	}
+    private boolean createTable() {
+        try {
+            this.connection = DriverManager.getConnection(DB_URL);
+            E dummyInstance = clazz.getDeclaredConstructor().newInstance();
+            Field[] fields = this.clazz.getDeclaredFields();
+            StringBuilder sql = new StringBuilder("CREATE TABLE " + tableName + " ( id INTEGER PRIMARY KEY AUTOINCREMENT,");
+            
+            // Loop through fields, skipping the 'id' field
+            for (Field field : fields) {
+                if (field.getName().equals("id")) {
+                    continue; // skip the id field, it's already the primary key
+                }
+                System.out.println("Executing for field: "+field);
+                // Get the corresponding getter method for the field
+                Method getter = clazz.getMethod(getterMethod(field.getName()));
+                System.out.println("Getter Name: "+getter);
+                if (field.getType().equals(Integer.class)) { // Integer fields
+                    Integer defaultValue = (Integer) getter.invoke(dummyInstance);
+                    sql.append(" ").append(field.getName()).append(" INTEGER");
+                    if (defaultValue != null) {
+                        sql.append(" DEFAULT ").append(defaultValue); // Add default value if not null
+                    }
+                    sql.append(",");
+                } else if (field.getType().equals(String.class)) { // String fields
+                    String defaultValue = (String) getter.invoke(dummyInstance);
+                    sql.append(" ").append(field.getName()).append(" TEXT");
+                    if (defaultValue != null) {
+                        sql.append(" DEFAULT '").append(defaultValue).append("'"); // Add default value in quotes for strings
+                    }
+                    sql.append(",");
+                } else if (Model.class.isAssignableFrom(field.getType())) { // Model fields (relationships)
+                    Model mod = ((Model) getter.invoke(dummyInstance));
+                    Integer defaultValue = null;
+                    if(mod!=null)
+                        defaultValue = mod.getId();
+                    sql.append(" ").append(field.getName()).append(" INTEGER");
+                    if (defaultValue != null) {
+                        sql.append(" DEFAULT ").append(defaultValue);
+                    }
+                    sql.append(",");
+                } else {
+                    // Unsupported type
+                    logger.warning("Field type not supported: " + field.getName() + " in class " + clazz.getName());
+                }
+                System.out.println("Executed for filed: "+field);
+            }
+    
+            // Remove the last trailing comma
+            if (sql.charAt(sql.length() - 1) == ',') {
+                sql.deleteCharAt(sql.length() - 1);
+            }
+    
+            // Close the table definition
+            sql.append(");");
+    
+            // Execute the SQL statement
+            try (Statement stmt = this.connection.createStatement()) {
+                stmt.execute(sql.toString());
+                logger.info("Table created successfully: " + tableName);
+            }
+    
+            return true; // Successfully created the table
+        } catch (SQLException sq) {
+            logger.severe("Unable to create table: " + this.tableName + " " + sq);
+        } catch (ReflectiveOperationException e) {
+            logger.severe("Reflection error in creating table: " + this.tableName + " " + e);
+        }
+        finally
+        {
+            try
+            {
+                this.connection.close();
+
+            }
+            catch(SQLException sq){
+                logger.info("SQL exception in createtable during closing coneetion");
+            }
+        }
+    
+        return false; // Failed to create the table
+    }
+    
 	 private boolean doesTableExist(String tableName) {
 	        String sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + tableName + "';";
 	        
-	        try (Statement statement = connection.createStatement();
-	             ResultSet resultSet = statement.executeQuery(sql)) {
+	        try 
+            {
+                this.connection = DriverManager.getConnection(DB_URL);
+                Statement statement = connection.createStatement();
+	             ResultSet resultSet = statement.executeQuery(sql);
 	            return resultSet.next(); // Returns true if the table exists
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	            return false;
 	        }
+            finally
+            {
+                try
+                {
+                    this.connection.close();
+                }
+                catch(SQLException sq)
+                {
+                    logger.info("does table exist method is unable to close the connection");
+                }
+            }
 	    }
 }

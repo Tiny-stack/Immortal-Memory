@@ -10,19 +10,22 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
-
+import java.sql.SQLException;
 import org.main.App;
 import org.main.backend.Operation;
 import org.main.cryptomanager.Crypto;
-import org.main.backend.records.Memory;
+// import org.main.backend.records.Memory;
 import org.main.backend.records.Ressponse;
+import org.main.backend.victororm.CRUD;
+import org.main.backend.models.Memory;
+
 
 public class MemoryController {
 
     private App ui;
     private Crypto cr;
     private Operation op;
-
+    private CRUD<Memory> memo;
     @FXML
     private TextArea memoryEditor;
     @FXML
@@ -37,13 +40,16 @@ public class MemoryController {
     @FXML
     private void saveMemory()
     {
-        if(Long.parseLong(activeMemo.getText())==0l)
-        {
             String title = cr.encryptText(memoryTitle.getText());
             String memory = cr.encryptText(memoryEditor.getText());
+            Memory mem = new Memory(title,memory,"da","dd");
             System.out.println("Title: "+title);
             System.out.println("memory: "+memory+"  VS  "+memoryTitle.getText());
-            long id = op.insertRecord(title,memory,123);
+            Integer activeId = Integer.parseInt(activeMemo.getText());
+            if(activeId>0)
+                mem.setId(activeId);
+            // long id = op.insertRecord(title,memory,123);
+            Integer id = memo.save(mem);
             if(id>0)
             {
                 memoButton.setText("Update Memory");
@@ -53,15 +59,7 @@ public class MemoryController {
             {
                 ui.showMessage("ERROR", "Unable to save Memory");
             }
-        }
-        else
-        {
-            long id = Long.parseLong(activeMemo.getText());
-            String title = cr.encryptText(this.memoryTitle.getText());
-            String content = cr.encryptText(this.memoryEditor.getText());
-            op.updateMemo(new Memory(title, content,123, id));
-            System.out.println("UPDATED");
-        }
+
 
     }
     @FXML
@@ -70,11 +68,11 @@ public class MemoryController {
         activeMemo.setText("6");
         System.out.println("load clicked");
 
-        Memory memo = op.readMemory(6l);
-        if(memo!=null)
+        Memory mem = this.memo.findById(6);
+        if(mem!=null)
         {
-            memoryTitle.setText(cr.decryptText(memo.getTitle()));
-            memoryEditor.setText(cr.decryptText(memo.getContent()));
+            memoryTitle.setText(cr.decryptText(mem.getTitle()));
+            memoryEditor.setText(cr.decryptText(mem.getContent()));
             memoButton.setText("Update Memory");
         }
 
@@ -83,38 +81,37 @@ public class MemoryController {
     @FXML
     private void nextMemory()
     {
-        long id = Long.parseLong(activeMemo.getText());
+        Integer id = Integer.parseInt(activeMemo.getText());
         System.out.println("NExt clicked");
-        Memory memo = op.readMemory(id+1);
-        if(memo!=null)
+        Memory mem = this.memo.findById(id+1);
+        if(mem!=null)
         {
-            memoryTitle.setText(cr.decryptText(memo.getTitle()));
-            memoryEditor.setText(cr.decryptText(memo.getContent()));
+            memoryTitle.setText(cr.decryptText(mem.getTitle()));
+            memoryEditor.setText(cr.decryptText(mem.getContent()));
             activeMemo.setText((id+1)+"");
         }
     }
     @FXML
     private void preMemory()
     {
-        long id = Long.parseLong(activeMemo.getText());
+        Integer id = Integer.parseInt(activeMemo.getText());
         if(id<=0)
             return;
-        Memory memo = op.readMemory(id-1);
-        if(memo!=null)
+        Memory mem = this.memo.findById(id-1);
+        if(mem!=null)
         {
-            memoryTitle.setText(cr.decryptText(memo.getTitle()));
-            memoryEditor.setText(cr.decryptText(memo.getContent()));
+            memoryTitle.setText(cr.decryptText(mem.getTitle()));
+            memoryEditor.setText(cr.decryptText(mem.getContent()));
             activeMemo.setText((id-1)+"");
         }   
     }
 
-    public void initResources(App ui,Operation op,Crypto cr)
+    public void initResources(App ui,Crypto cr) throws SQLException
     {
         this.ui = ui;
-        this.op = op;
         this.cr = cr;
         this.activeMemo.setVisible(false);
-        System.out.println("OP: "+op);
+        this.memo = new CRUD<>(Memory.class);
     }
     
 }

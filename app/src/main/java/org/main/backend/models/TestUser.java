@@ -1,6 +1,11 @@
-package org.main.backend.victororm;
+package org.main.backend.models;
+
+
+// package org.main.backend.victororm;
 import java.sql.SQLException;
-public class User extends Model
+
+import org.main.backend.victororm.Model;
+public class TestUser extends Model
 {
 	// private Long id;
 	// private Map<String,Object> fields;
@@ -27,7 +32,7 @@ public class User extends Model
     // {
     //     this.bestFriendId = u;
     // }
-	public User(String name,String dob,String password, String about,User bestFriendId)
+	public TestUser(String name,String dob,String password, String about,User bestFriendId)
 	{
 		this.name = name;
 		this.dob = dob;
@@ -38,10 +43,10 @@ public class User extends Model
 	}
 	@Override
 	public String getTableName() {
-		return "USER";
+		return "TestUser";
 	}
 
-	public User()
+	public TestUser()
 	{}
 	public String getName() {
 		return name;
