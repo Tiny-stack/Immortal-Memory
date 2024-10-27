@@ -7,16 +7,17 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.web.HTMLEditor;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-
+import javafx.scene.layout.AnchorPane;
 import java.sql.SQLException;
 import org.main.App;
 import org.main.backend.Operation;
 import org.main.cryptomanager.Crypto;
 // import org.main.backend.records.Memory;
 import org.main.backend.records.Ressponse;
-import org.main.backend.victororm.CRUD;
+import org.worm.CRUD;
 import org.main.backend.models.Memory;
 
 
@@ -27,32 +28,42 @@ public class MemoryController {
     private Operation op;
     private CRUD<Memory> memo;
     @FXML
-    private TextArea memoryEditor;
-    @FXML
-    private TextField memoryTitle;
+    private HTMLEditor memoryEditor;
     @FXML
     private Button memoButton;
     @FXML
     private TextField activeMemo;
-
+    private StringBuilder lastSaved = new StringBuilder();
+    @FXML
+    private TextField memoryTitle;
    
 
     @FXML
     private void saveMemory()
     {
-            String title = cr.encryptText(memoryTitle.getText());
-            String memory = cr.encryptText(memoryEditor.getText());
+            Integer activeId = Integer.parseInt(activeMemo.getText());
+            String content = Helper.extractBodyContent(memoryEditor.getHtmlText());
+            System.out.println(content);
+            String title = memoryTitle.getText();
+            // content = content.substring(+4,content.length());
+            String titleInHtml = "<h1 style=\"text-align: center;\"><span style=\"font-family: &quot;&quot;;\">"+title+"</span></h1>";
+            if(content.indexOf(titleInHtml)==-1)
+                content = titleInHtml+content;
+            String memory = cr.encryptText(content);
+            title = cr.encryptText(title);
             Memory mem = new Memory(title,memory,"da","dd");
             System.out.println("Title: "+title);
-            System.out.println("memory: "+memory+"  VS  "+memoryTitle.getText());
-            Integer activeId = Integer.parseInt(activeMemo.getText());
+            // System.out.println("memory: "+memory+"  VS  "+memoryTitle.getText())
             if(activeId>0)
                 mem.setId(activeId);
+            else
+                Helper.setBodyContent(content, memoryEditor);
             // long id = op.insertRecord(title,memory,123);
             Integer id = memo.save(mem);
+            lastSaved.setLength(0);
+            lastSaved.append(content+memoryTitle.getText());
             if(id>0)
             {
-                memoButton.setText("Update Memory");
                 activeMemo.setText(id+"");
             }
             else
@@ -62,47 +73,39 @@ public class MemoryController {
 
 
     }
-    @FXML
-    private void loadMemory()
-    {
-        activeMemo.setText("6");
-        System.out.println("load clicked");
-
-        Memory mem = this.memo.findById(6);
-        if(mem!=null)
-        {
-            memoryTitle.setText(cr.decryptText(mem.getTitle()));
-            memoryEditor.setText(cr.decryptText(mem.getContent()));
-            memoButton.setText("Update Memory");
-        }
-
-    }
 
     @FXML
     private void nextMemory()
     {
+        if(!checkChangesAndProceed())
+            return;
         Integer id = Integer.parseInt(activeMemo.getText());
-        System.out.println("NExt clicked");
         Memory mem = this.memo.findById(id+1);
         if(mem!=null)
         {
-            memoryTitle.setText(cr.decryptText(mem.getTitle()));
-            memoryEditor.setText(cr.decryptText(mem.getContent()));
+            
+            Helper.setBodyContent(cr.decryptText(mem.getContent()), memoryEditor);
             activeMemo.setText((id+1)+"");
+            lastSaved.setLength(0);
+            lastSaved.append(Helper.extractBodyContent(memoryEditor.getHtmlText())+memoryTitle.getText());
         }
     }
     @FXML
     private void preMemory()
     {
+        if(!checkChangesAndProceed())
+            return;
         Integer id = Integer.parseInt(activeMemo.getText());
         if(id<=0)
             return;
         Memory mem = this.memo.findById(id-1);
         if(mem!=null)
         {
-            memoryTitle.setText(cr.decryptText(mem.getTitle()));
-            memoryEditor.setText(cr.decryptText(mem.getContent()));
+            
+            Helper.setBodyContent(cr.decryptText(mem.getContent()), memoryEditor);
             activeMemo.setText((id-1)+"");
+            lastSaved.setLength(0);
+            lastSaved.append(Helper.extractBodyContent(memoryEditor.getHtmlText())+memoryTitle.getText());
         }   
     }
 
@@ -113,5 +116,33 @@ public class MemoryController {
         this.activeMemo.setVisible(false);
         this.memo = new CRUD<>(Memory.class);
     }
+    private static String removeBodyContent(String html) {
+        // Regex to find <body ...>...</body> and replace its content
+        return html.replaceAll("(?i)(<body[^>]*>)([\\s\\S]*?)(</body>)", "$1$3");
+    }
     
+    private boolean checkChangesAndProceed()
+    {
+        Integer id = Integer.parseInt(activeMemo.getText());
+        System.out.println("NExt clicked");
+        if(!lastSaved.toString().equals(Helper.extractBodyContent(memoryEditor.getHtmlText())+memoryTitle.getText()))
+        {
+           int res = ui.showYesNoDialog("Unasaved Changes", "Save Changes...?","You have unsaved Changes, Save Changes..?");
+           if(res==1)
+           {
+                this.saveMemory();
+                return true;
+           }
+           else if(res==2)
+                return false;
+            
+        }
+        return true;
+    }
+
+    @FXML
+    private void returnToMainMenu()
+    {
+        ui.loadMainMenuScreen(cr);
+    }
 }

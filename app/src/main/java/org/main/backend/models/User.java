@@ -1,7 +1,7 @@
 package org.main.backend.models;
 import java.sql.SQLException;
 
-import org.main.backend.victororm.Model;
+import org.worm.Model;
 public class User extends Model
 {
 	// private Long id;

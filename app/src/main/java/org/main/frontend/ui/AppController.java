@@ -1,11 +1,17 @@
 package org.main.frontend.ui;
 
 
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Circle;
 import javafx.scene.control.Label;
 import java.sql.SQLException;
 import org.main.App;
@@ -13,7 +19,7 @@ import org.main.backend.Operation;
 import org.main.backend.models.User;
 import org.main.cryptomanager.Crypto;
 import org.main.backend.records.Ressponse;
-import org.main.backend.victororm.CRUD;
+import org.worm.CRUD;
 // import org.main.backend.models.User;;
 
 
@@ -29,13 +35,16 @@ public class AppController {
     @FXML
     private PasswordField passwordField;
     @FXML
-    private TextArea memoryEditor;
-    @FXML
-    private TextField memoryTitle;
+    private ImageView profilePic;
 
     @FXML
     private Label welcomeLabel;
-
+    @FXML
+    private ImageView loader;
+    @FXML
+    private AnchorPane root;
+    // @FXML
+    // private ImageView pr = new ImageView(new Image(getClass().getResourceAsStream("/org/main/frontend/icons/loader.gif")));
     @FXML
     private void handleSignup() throws SQLException{
         String username = usernameField.getText();
@@ -77,24 +86,12 @@ public class AppController {
             throw new SQLException("ERROR");
         if(cr.checkPassword(password, u.getPassword()))
         {
-            
-            ui.showMessage("LOGIN SUCCESSfFUL", "Welcome "+u.getName()+"!");
-            try
-            {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/main/frontend/fxml/memory.fxml"));
-                ui.changeToAnotherScene(loader);
-                MemoryController memo = loader.getController();
-                boolean res = cr.setSecretkey(u.getDob());
-                if(res)
-                    memo.initResources(ui,cr);
-                else
-                    System.out.println("Unable to generate the secretKey");
-            }
-            catch(Exception e)
-            {
-                System.err.println("EX: "+e);
-                System.err.println("UNABLE TO LOAD A SCENE");
-            }
+            boolean res = cr.setSecretkey(u.getDob());
+            if(res)
+                showloaderAndAlert("LOGIN SUCCESSfFUL", "Welcome "+u.getName()+"!");
+            else
+                System.out.println("ERRRRRIIIIIRRRRR");
+            // ui.showMessage();
 
         }
         else
@@ -108,8 +105,9 @@ public class AppController {
         try
         {
             String userName = new CRUD<>(User.class).findAll().get(0).getName();
-            if(userName.length()>0)
-                this.welcomeLabel.setText("Welcome "+userName);
+            Helper.clipImageToCircle(profilePic,100);
+            loader.setImage(new Image(getClass().getResourceAsStream("/org/main/frontend/icons/loader.gif")));
+            Helper.clipImageToCircle(loader, 100);
         }
         catch(Exception e)
         {
@@ -122,5 +120,37 @@ public class AppController {
         this.ui = ui;
         this.cr = cr;
     }
-    
+    private void showloaderAndAlert(String title,String message)
+    {
+
+        loader.setVisible(true);
+        // root.getChildren().add(loader);
+        Task<Void> loadSceneTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    // Load the new memory screen (scene creation)
+                    Thread.sleep(1500); //if use quickly enters the password and stage is not fully loaded yet Alert box will not be position properly to fix this add this delay it will ensure that stage is loaded peroperly before showing the dialog
+                    return null;
+                }};
+        loadSceneTask.setOnSucceeded(e->{
+            ui.showMessage(title, message);
+            try
+            {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/main/frontend/fxml/mainMenu.fxml"));
+                ui.changeToAnotherScene(loader);
+                MainMenu mainMenu = loader.getController();
+                if(mainMenu!=null)
+                    mainMenu.initResources(ui,cr);
+                else
+                    System.out.println("Unable to generate the secretKey");
+            }
+            catch(Exception ex)
+            {
+                System.err.println("EX: "+ex);
+                System.err.println("UNABLE TO LOAD A SCENE: "+e);
+            }
+        });
+        new Thread(loadSceneTask).start();
+                
+    }   
 }

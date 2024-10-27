@@ -4,7 +4,7 @@ package org.main.backend.models;
 // package org.main.backend.victororm;
 import java.sql.SQLException;
 
-import org.main.backend.victororm.Model;
+import org.worm.Model;
 public class TestUser extends Model
 {
 	// private Long id;
@@ -19,7 +19,6 @@ public class TestUser extends Model
 	private User bestFriendId;
 
 
-	@Override
 	public Integer getId() {
 		return this.id;
 	}
@@ -41,7 +40,7 @@ public class TestUser extends Model
 		this.bestFriendId = bestFriendId;
         this.id = 0;
 	}
-	@Override
+
 	public String getTableName() {
 		return "TestUser";
 	}

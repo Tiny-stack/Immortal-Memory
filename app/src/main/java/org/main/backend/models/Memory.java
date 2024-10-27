@@ -3,7 +3,7 @@ package org.main.backend.models;
 // package org.main.backend.models;
 // import java.sql.SQLException;
 
-import org.main.backend.victororm.Model;
+import org.worm.Model;
 public class Memory extends Model{
 
     private Integer id;
