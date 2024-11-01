@@ -5,20 +5,18 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextArea;
+
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Circle;
 import javafx.scene.control.Label;
 import java.sql.SQLException;
-import org.main.App;
+
 import org.main.backend.Operation;
 import org.main.backend.models.User;
 import org.main.cryptomanager.Crypto;
-import org.main.backend.records.Ressponse;
+import org.main.main.App;
 import org.worm.CRUD;
 // import org.main.backend.models.User;;
 
@@ -143,6 +141,7 @@ public class AppController {
                     mainMenu.initResources(ui,cr);
                 else
                     System.out.println("Unable to generate the secretKey");
+                loader = null;
             }
             catch(Exception ex)
             {

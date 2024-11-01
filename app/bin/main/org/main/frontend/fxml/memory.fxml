@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.web.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.*?>
+<?import javafx.scene.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.main.frontend.ui.MemoryController">
+   <children>
+      <TextField fx:id="activeMemo" text="0" />
+      <AnchorPane prefHeight="1014.0" prefWidth="1996.0" StackPane.alignment="CENTER">
+          
+          <children>
+           <ImageView fitHeight="1193.0" fitWidth="2037.0" layoutX="-55.0" layoutY="7.0" pickOnBounds="true">
+               <image>
+                  <Image url="@../../../../img/Talon.png" />
+               </image>
+               
+                  </ImageView>
+      
+                   <HTMLEditor fx:id="memoryEditor" htmlText="&lt;html&gt;    &lt;head&gt;        &lt;style&gt;            body {    background-color: #121212; /* Dark background */    color: #ffffff; /* Light text color */    font-family: Arial, sans-serif; /* Font family */}h1, h2, h3, h4, h5, h6 {    color: #bb86fc; /* Headings color */}p {    color: #e0e0e0; /* Paragraph text color */}a {    color: #bb86fc; /* Link color */}a:hover {    text-decoration: underline; /* Underline links on hover */}/* Code styling */pre, code {    background-color: #1e1e1e; /* Background for code blocks */    color: #ffffff; /* Text color for code */    padding: 5px;    border-radius: 5px; /* Rounded corners for code blocks */}        &lt;/style&gt;    &lt;/head&gt;    &lt;body contenteditable=&quot;true&quot;&gt;        &lt;/body&gt;        &lt;/html&gt;" layoutX="461.0" layoutY="183.0" prefHeight="801.0" prefWidth="1125.0" styleClass="link" stylesheets="@dark.css" />
+            <DatePicker layoutX="463.0" layoutY="147.0" promptText="Enter The Date" />
+            <TextField fx:id="memoryTitle" layoutX="777.0" layoutY="147.0" prefHeight="29.0" prefWidth="392.0" promptText="Enter a Title">
+               <tooltip>
+                  <Tooltip text="Title of The Memory" />
+               </tooltip>
+            </TextField>
+         </children>
+         <effect>
+            <Glow />
+         </effect> 
+         
+      </AnchorPane>
+       <Button mnemonicParsing="false" onAction="#returnToMainMenu" styleClass="large-round-button" stylesheets="@../css/mainMenu.css" StackPane.alignment="TOP_LEFT">
+         <graphic>
+            <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../icons/home.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+     <Button mnemonicParsing="false" onAction="#preMemory" styleClass="next-prev-round-button" stylesheets="@../css/mainMenu.css" StackPane.alignment="CENTER_LEFT">
+         <graphic>
+            <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" rotate="180.0">
+               <image>
+                  <Image url="@../icons/next.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+       <Button fx:id="memoButton" mnemonicParsing="false" onAction="#saveMemory" styleClass="next-prev-round-button" stylesheets="@../css/mainMenu.css" StackPane.alignment="TOP_RIGHT">
+         <graphic>
+            <ImageView fitHeight="127.0" fitWidth="134.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../icons/save.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+      <Button layoutX="10.0" layoutY="492.0" mnemonicParsing="false" onAction="#nextMemory" styleClass="next-prev-round-button" stylesheets="@../css/mainMenu.css" StackPane.alignment="CENTER_RIGHT">
+         <graphic>
+            <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../icons/next.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Button>
+   </children>
+</StackPane>
