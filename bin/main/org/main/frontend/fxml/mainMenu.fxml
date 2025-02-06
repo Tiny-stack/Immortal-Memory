@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.*?>
+<?import java.net.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1000.0" prefWidth="1980.0" styleClass="stackpane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="frontend.ui.MainMenu">
+   <children>
+      <ImageView fitHeight="1123.0" fitWidth="2076.0" pickOnBounds="true" preserveRatio="true" StackPane.alignment="CENTER">
+         <image>
+            <Image url="@../../../../img/Wave.png" />
+         </image>
+      </ImageView>
+      <Canvas fx:id="canvas" height="1036.0" width="2020.0" />
+      <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="transparent-vbox" stylesheets="@../css/mainMenu.css">
+         <children>
+            <Button mnemonicParsing="false" stylesheets="@../css/mainMenu.css" text="See All" />
+            <Button mnemonicParsing="false" onAction="#newMemo" styleClass="b" stylesheets="@../css/mainMenu.css" text="New Memory" />
+            <Button mnemonicParsing="false" onAction="#allMemo" stylesheets="@../css/mainMenu.css" text="About" />
+         </children>
+      </VBox>
+      <Label prefHeight="151.0" prefWidth="560.0" stylesheets="@../css/mainMenu.css" text="Immortal Memories" StackPane.alignment="TOP_CENTER">
+         <styleClass>
+            <String fx:value="banner" />
+            <String fx:value="banner-label" />
+         </styleClass>
+      </Label>
+     
+   </children>
+</StackPane>
